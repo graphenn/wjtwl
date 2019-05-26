@@ -2,19 +2,26 @@
 #include <stdlib.h>
 #include "wjtwl.h"
 
+/*添加此头文件是为了单元测试。正常使用不需要添加*/
+#include "eph.h"
+#include "elp.h"
+#include "vsop.h"
+
 
 /*儒略日，简化儒略日互转。儒略日以秒为单位和以日为单位互转*/
 #define TEST_1 (0)
-/*设置获取时区*/
+/*设置获取时区，可常开，用于修改时区*/
 #define TEST_2 (1)
 /*儒略日转格里历、儒略历、公历*/
 #define TEST_3 (0)
 /*格里历、儒略历、公历转儒略日*/
-#define TEST_4 (1)
+#define TEST_4 (0)
 /*儒略历、儒略日互转静默测试*/
 #define TEST_5 (0)
 /*格里高利历、儒略日互转静默测试*/
 #define TEST_6 (0)
+/*世界时转力学时测试*/
+#define TEST_7 (1)
 
 int main()
 {
@@ -385,6 +392,31 @@ int main()
 	}
 #endif // TEST_6
 
+#if TEST_7
+	jd_t julian_day;
+	double julian_day_day;
+	int32_t delta_t;
+	float delta_t_time;
+
+	//julian_day_day = 1458085.5;
+	//julian_day_day = 2457387.5;
+	julian_day_day = 2459215.5;
+	ret = julian_day_day_2_julian_day(julian_day_day, &julian_day);
+	if (WJTWL_SUCCESS != ret)
+	{
+		printf("something wrong in julian_day_day_2_julian_day with error numer %d\n", ret);
+	}
+	else
+	{
+		printf("Julian Day is %lld\n", julian_day);
+	}
+
+	//julian_day = -166845060000;
+	delta_t = calculate_deltaT(julian_day);
+	delta_t_time = (float)delta_t / 1024;
+
+	printf("delta T is %f\n", delta_t_time);
+#endif // TEST_7
 	getchar();
 
     return 0;

@@ -4,6 +4,9 @@ cmake_minimum_required(VERSION 2.8)
 
 include_directories("../include")
 
+#添加此头文件是为了单元测试。正常使用不需要添加
+include_directories("../src")
+
 aux_source_directory(. DIR_EXAMPLE_SRCS)
 
 add_executable(example ${DIR_EXAMPLE_SRCS})
