@@ -398,9 +398,9 @@ int main()
 	int32_t delta_t;
 	float delta_t_time;
 
-	//julian_day_day = 1458085.5;
+	julian_day_day = 1458085.5;
 	//julian_day_day = 2457387.5;
-	julian_day_day = 2459215.5;
+	//julian_day_day = 2459215.5;
 	ret = julian_day_day_2_julian_day(julian_day_day, &julian_day);
 	if (WJTWL_SUCCESS != ret)
 	{
