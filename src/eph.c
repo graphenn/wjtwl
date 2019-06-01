@@ -20,9 +20,16 @@
 * 系数替换为原系数 * 1024
 * 程序中计算公式相应做了调整
 */
-#define NDTCF16 57 
+#ifdef CHINESE_CALENDAR_HISTORY_SUPPORT
+#define NDTCF16_HISTORY (27)
+#else
+#define NDTCF16_HISTORY (0)
+#endif // CHINESE_CALENDAR_HISTORY_SUPPORT
+#define NDTCF16 (NDTCF16_HISTORY +  30)
+
 const int32_t dtcf16[NDTCF16][5] =
 {
+#ifdef CHINESE_CALENDAR_HISTORY_SUPPORT
 	/*00*/{ 2916171,        0,         0,        0,        0 }, /* ybeg=     , yend= -720 */
 	/*01*/{ 3734313, 21043807, -21778921, 12148140, -4650116 }, /* ybeg= -720, yend=  400 */
 	/*02*/{ 4172605,  6762910,  -6124816,  -517215,  1382000 }, /* ybeg=  400, yend= 1000 */
@@ -50,6 +57,7 @@ const int32_t dtcf16[NDTCF16][5] =
 	/*24*/{ 4837345,     5041,      6992,    -1361,      737 }, /* ybeg= 1905, yend= 1910 */
 	/*25*/{ 4840997,    11409,      6482,      851,     -845 }, /* ybeg= 1910, yend= 1915 */
 	/*26*/{ 4844649,    17898,      5650,    -1682,      268 }, /* ybeg= 1915, yend= 1920 */
+#endif // CHINESE_CALENDAR_HISTORY_SUPPORT
 	/*27*/{ 4848303,    22136,      3092,     -877,        8 }, /* ybeg= 1920, yend= 1925 */
 	/*28*/{ 4851955,    24360,      1365,     -851,      130 }, /* ybeg= 1925, yend= 1930 */
 	/*29*/{ 4855607,    25004,        53,     -460,      145 }, /* ybeg= 1930, yend= 1935 */
@@ -113,7 +121,7 @@ int32_t calculate_deltaT_polynomial(unsigned int i, int32_t jdx2)
 	*/
 	#define CALCULATE_DELTAT_T_SHIFT (24)
 
-	t_temp = (((int64_t)jdx2 - dtcf16[i - 1][0]) << CALCULATE_DELTAT_T_SHIFT) / (dtcf16[i][0] - dtcf16[i - 1][0]);
+	t_temp = (((int64_t)jdx2 - dtcf16[i - 1][0]) << CALCULATE_DELTAT_T_SHIFT) / ((int64_t)dtcf16[i][0] - dtcf16[i - 1][0]);
 	return (int32_t)(dtcf16[i][1] + (t_temp * (dtcf16[i][2] + ((t_temp * (dtcf16[i][3] + ((t_temp * dtcf16[i][4])
 		>> CALCULATE_DELTAT_T_SHIFT))) >> CALCULATE_DELTAT_T_SHIFT)) >> CALCULATE_DELTAT_T_SHIFT));
 }
@@ -150,16 +158,18 @@ int32_t calculate_deltaT(jd_t julian_day)
 		/*
 		保证连续性，在表开始前，及结尾之后，过渡到长期估算公式结果，过渡期为CALCULATE_DELTAT_JD_X2_INTERVAL。
 		*/
+#ifdef CHINESE_CALENDAR_HISTORY_SUPPORT
 		if ((jdx2 >= dtcf16[0][0] - CALCULATE_DELTAT_JD_X2_INTERVAL) && (jdx2 < (dtcf16[0][0])))
 		{
-			delta_t = delta_t - (int32_t)((int64_t)(jdx2 - dtcf16[0][0] + CALCULATE_DELTAT_JD_X2_INTERVAL) * (calculate_deltaT_extern((jd_t)dtcf16[0][0] * 43200)
-				- dtcf16[1][1]) / CALCULATE_DELTAT_JD_X2_INTERVAL);
+			delta_t = delta_t - (int32_t)(((int64_t)jdx2 - dtcf16[0][0] + CALCULATE_DELTAT_JD_X2_INTERVAL) * (calculate_deltaT_extern((jd_t)dtcf16[0][0] * 43200)
+				- (int64_t)dtcf16[1][1]) / CALCULATE_DELTAT_JD_X2_INTERVAL);
 		}
+#endif // CHINESE_CALENDAR_HISTORY_SUPPORT
 
 		if ((jdx2 >= dtcf16[NDTCF16 - 1][0]) && (jdx2 < (dtcf16[NDTCF16 - 1][0] + CALCULATE_DELTAT_JD_X2_INTERVAL)))
 		{
-			delta_t = delta_t + (int32_t)((int64_t)(jdx2 - dtcf16[NDTCF16 - 1][0] - CALCULATE_DELTAT_JD_X2_INTERVAL) * (calculate_deltaT_extern((jd_t)dtcf16[NDTCF16 - 1][0] * 43200)
-				- calculate_deltaT_polynomial(NDTCF16 - 1, dtcf16[NDTCF16 - 1][0])) / CALCULATE_DELTAT_JD_X2_INTERVAL);
+			delta_t = delta_t + (int32_t)(((int64_t)jdx2 - dtcf16[NDTCF16 - 1][0] - CALCULATE_DELTAT_JD_X2_INTERVAL) * (calculate_deltaT_extern((jd_t)dtcf16[NDTCF16 - 1][0] * 43200)
+				- (int64_t)calculate_deltaT_polynomial(NDTCF16 - 1, dtcf16[NDTCF16 - 1][0])) / CALCULATE_DELTAT_JD_X2_INTERVAL);
 		}
 
 

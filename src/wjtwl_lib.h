@@ -2,6 +2,7 @@
 #define _wjtwl_lib_h_
 
 #include "wjtwl.h"
+#include "wjtwl_lib_config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,7 +16,15 @@ extern "C" {
     }                                                  \
 }
 
-extern int g_time_zone;
+/*
+time_zone£¬Ê±Çø
+*/
+typedef struct
+{
+	int time_zone;
+} wjtwl_lib_config_t;
+
+extern SPEC___THREAD wjtwl_lib_config_t g_wjtwl_lib_config;
 
 
 #ifdef __cplusplus

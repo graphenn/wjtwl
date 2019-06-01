@@ -62,7 +62,7 @@ int julian_day_2_calendar(jd_t julian_day, wjtwl_date_t *calendar)
 	check_jd(julian_day);
 
 	/* 1582年10月15日0时0分0秒的儒略日为198647467200 */
-	if ((julian_day + g_time_zone) >= 198647467200)
+	if ((julian_day + g_wjtwl_lib_config.time_zone) >= 198647467200)
 	{
 		julian_day_2_gregorian_calendar(julian_day, calendar);
 	}
@@ -90,7 +90,7 @@ void julian_day_2_julian_gregorian_calendar(jd_t julian_day, int calendar_type, 
 	此时基准日期为公元前10001年1月1日。
 	同时添加儒略日12小时时间及时区补正43200，共166876632000秒。
 	*/
-	julian_day += 166876632000 + g_time_zone;
+	julian_day += 166876632000 + g_wjtwl_lib_config.time_zone;
 
 	/*
 	求日期，取日数， julian_day / 24 / 60 / 60
@@ -211,7 +211,7 @@ int gregorian_calendar_2_julian_day(wjtwl_date_t gregorian_calendar, jd_t *julia
 	}
 
 	/* 换算年份及时区补正及儒略日12小时（43200秒）补正 */
-	julian_day_temp = julian_day_temp - 176718974400 - g_time_zone;
+	julian_day_temp = julian_day_temp - 176718974400 - g_wjtwl_lib_config.time_zone;
 
 	check_jd(julian_day_temp);
 
@@ -277,7 +277,7 @@ int julian_calendar_2_julian_day(wjtwl_date_t julian_calendar, jd_t *julian_day)
 	}
 
 	/* 换算年份及时区补正及儒略日12小时（43200秒）补正 */
-	julian_day_temp = julian_day_temp - 166876632000 - g_time_zone;
+	julian_day_temp = julian_day_temp - 166876632000 - g_wjtwl_lib_config.time_zone;
 	
 	check_jd(julian_day_temp);
 

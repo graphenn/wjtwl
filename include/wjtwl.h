@@ -2,7 +2,7 @@
 #define _wjtwl_h_
 
 #include <stdint.h>
-#include <time.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -11,6 +11,17 @@ extern "C" {
 /*错误码*/
 #define WJTWL_SUCCESS    (0)
 #define WJTWL_ERROR_DATE (1)
+
+/*
+检查文举天文历版本及支持特性。
+chinese_calendar_history_support：是否支持1929.02.10以前的农历计算。否的话仅支持紫金历。
+*/
+typedef struct
+{
+	unsigned int version_major;
+	unsigned int version_minor;
+	bool chinese_calendar_history_support;
+} wjtwl_features_t;
 
 /*
 time_zone，时区
@@ -48,8 +59,13 @@ typedef struct
 } wjtwl_date_t;
 
 /*
+检查文举天文历版本及支持特性。
+*/
+int wjtwl_get_features(wjtwl_features_t *wjtwl_features);
+
+/*
 设置
-时区：本天文历需要设置统一的时区，不同时区计算在上层实现。注意儒略日不区分时区，直接使用世界时。
+时区：本天文历需要设置统一的时区，如有不同时区间计算需在上层实现。注意儒略日不区分时区，直接使用世界时。
 */
 int wjtwl_set_config(const wjtwl_config_t *wjtwl_config);
 int wjtwl_get_config(wjtwl_config_t *wjtwl_config);

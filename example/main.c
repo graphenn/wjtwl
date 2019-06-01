@@ -7,7 +7,8 @@
 #include "elp.h"
 #include "vsop.h"
 
-
+/*检查文举天文历版本及支持特性*/
+#define TEST_0 (1)
 /*儒略日，简化儒略日互转。儒略日以秒为单位和以日为单位互转*/
 #define TEST_1 (0)
 /*设置获取时区，可常开，用于修改时区*/
@@ -26,6 +27,18 @@
 int main()
 {
 	int ret;
+
+#if TEST_0
+	wjtwl_features_t wjtwl_features;
+
+	ret = wjtwl_get_features(&wjtwl_features);
+	if (WJTWL_SUCCESS != ret)
+	{
+		printf("something wrong in wjtwl_get_features with error numer %d\n", ret);
+	}
+	printf("wjtwl vresion = %u.%u\nchinese_calendar_history_support = %d\n", wjtwl_features.version_major, wjtwl_features.version_minor, wjtwl_features.chinese_calendar_history_support);
+
+#endif // TEST_2
 
 #if TEST_1 
 	jd_t modified_julian_day, julian_day;
@@ -417,7 +430,7 @@ int main()
 
 	printf("delta T is %f\n", delta_t_time);
 #endif // TEST_7
-	getchar();
+	ret = getchar();
 
     return 0;
 }
