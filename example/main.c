@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "wjtwl.h"
 
-/*添加此头文件是为了单元测试。正常使用不需要添加*/
+/*添加这些头文件是为了单元测试。正常使用不需要添加*/
 #include "eph.h"
 #include "elp.h"
 #include "vsop.h"
@@ -22,7 +22,9 @@
 /*格里高利历、儒略日互转静默测试*/
 #define TEST_6 (0)
 /*世界时转力学时测试*/
-#define TEST_7 (1)
+#define TEST_7 (0)
+/*计算太阳地心黄经*/
+#define TEST_8 (1)
 
 int main()
 {
@@ -38,7 +40,7 @@ int main()
 	}
 	printf("wjtwl vresion = %u.%u\nchinese_calendar_history_support = %d\n", wjtwl_features.version_major, wjtwl_features.version_minor, wjtwl_features.chinese_calendar_history_support);
 
-#endif // TEST_2
+#endif // TEST_0
 
 #if TEST_1 
 	jd_t modified_julian_day, julian_day;
@@ -115,7 +117,7 @@ int main()
 	}
 
 	//wjtwl_config.time_zone = 0;
-	wjtwl_config.time_zone = 14;
+	wjtwl_config.time_zone = 7.758889f;
 	//wjtwl_config.time_zone = -12;
 	ret = wjtwl_set_config(&wjtwl_config);
 	if (WJTWL_SUCCESS != ret)
@@ -411,8 +413,8 @@ int main()
 	int32_t delta_t;
 	float delta_t_time;
 
-	julian_day_day = 1458085.5;
-	//julian_day_day = 2457387.5;
+	//julian_day_day = 1458085.5;
+	julian_day_day = 2457387.5;
 	//julian_day_day = 2459215.5;
 	ret = julian_day_day_2_julian_day(julian_day_day, &julian_day);
 	if (WJTWL_SUCCESS != ret)
@@ -430,6 +432,41 @@ int main()
 
 	printf("delta T is %f\n", delta_t_time);
 #endif // TEST_7
+
+#if TEST_8
+	jd_t julian_day;
+	double julian_day_day;
+	double longitude;
+	int longitude_degree;
+	int longitude_minute;
+	double longitude_second;
+	int32_t delta_t;
+
+	//julian_day_day = 1458085.5;
+	julian_day_day = 2451545;
+	//julian_day_day = 2459215.5;
+	ret = julian_day_day_2_julian_day(julian_day_day, &julian_day);
+	if (WJTWL_SUCCESS != ret)
+	{
+		printf("something wrong in julian_day_day_2_julian_day with error numer %d\n", ret);
+	}
+	else
+	{
+		printf("Julian Day is %lld\n", julian_day);
+	}
+
+	delta_t = calculate_deltaT(julian_day);
+	julian_day_day = julian_day_day + ((double)delta_t / 88473600);
+
+	longitude = GetSunEclipticLongitudeEC(julian_day_day);
+	longitude_degree = (int)longitude;
+	longitude_minute = (int)((longitude - longitude_degree) * 60);
+	longitude_second = longitude * 3600 - ((double)longitude_degree * 3600 + (double)longitude_minute * 60);
+
+	printf("longitude is %f\n", longitude);
+	printf("longitude is %d:%d:%f\n", longitude_degree, longitude_minute, longitude_second);
+#endif // TEST_8
+
 	ret = getchar();
 
     return 0;

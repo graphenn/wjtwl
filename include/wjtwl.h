@@ -90,6 +90,13 @@ int julian_day_2_gregorian_calendar(jd_t julian_day, wjtwl_date_t *gregorian_cal
 int julian_calendar_2_julian_day(wjtwl_date_t julian_calendar, jd_t *julian_day);
 int julian_day_2_julian_calendar(jd_t julian_day, wjtwl_date_t *julian_calendar);
 
+/*农历儒略日互转*/
+int chinese_calendar_2_julian_day(wjtwl_date_t julian_calendar, jd_t* julian_day);
+int julian_day_2_chinese_calendar(jd_t julian_day, wjtwl_date_t* julian_calendar);
+
+/*待修改*/
+/*从某一年的某个节气开始，连续计算25个节气，返回各节气的儒略日，本地时间*/
+void GetAllSolarTermsJD(int year, double* SolarTerms, int start);
 
 #ifdef __cplusplus
 }

@@ -7,7 +7,11 @@
 extern "C" {
 #endif
 
+double CalcSunEclipticLongitudeEC(double dt);
 
+double CalcSunEclipticLatitudeEC(double dt);
+
+double CalcSunEarthRadius(double dt);
 
 #ifdef __cplusplus
 }

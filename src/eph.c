@@ -1,6 +1,9 @@
 #include "wjtwl_lib.h"
 #include "eph.h"
-
+#include "vsop.h"
+#include "nutation.h"
+#include "elp.h"
+#include "wjtwl_math.h"
 /*
 在超出参数表尾时间以后，为保证连续性，需要过渡到长期估算公式结果。
 公式值为儒略日数 * 2。
@@ -203,3 +206,125 @@ int32_t calculate_deltaT(jd_t julian_day)
 	return delta_t;
 }
 
+/*修正太阳的地心黄经，longitude, latitude 是修正前的太阳地心黄经和地心黄纬(度)，dt是儒略千年数，返回值单位度*/
+double AdjustSunEclipticLongitudeEC(double dt, double longitude, double latitude)
+{
+	double T = dt * 10; //T是儒略世纪数
+
+	double dbLdash = longitude - 1.397 * T - 0.00031 * T * T;
+
+	// 转换为弧度
+	dbLdash *= RADIAN_PER_ANGLE;
+
+	return (-0.09033 + 0.03916 * (cos(dbLdash) + sin(dbLdash)) * tan(latitude * RADIAN_PER_ANGLE)) / 3600.0;
+}
+
+
+/*得到某个儒略日的太阳地心黄经(视黄经)，单位度*/
+double GetSunEclipticLongitudeEC(double jde)
+{
+	double dt = (jde - JD2000) / 365250.0; /*儒略千年数*/
+
+	// 计算太阳的地心黄经
+	double longitude = CalcSunEclipticLongitudeEC(dt);
+
+	// 计算太阳的地心黄纬
+	double latitude = CalcSunEclipticLatitudeEC(dt) * 3600.0;
+
+	// 修正精度
+	longitude += AdjustSunEclipticLongitudeEC(dt, longitude, latitude);
+
+	// 修正天体章动
+	longitude += CalcEarthLongitudeNutation(dt);
+
+	// 修正光行差
+	/*太阳地心黄经光行差修正项是: -20".4898/R*/
+	longitude -= (20.4898 / CalcSunEarthRadius(dt)) / 3600.0;
+
+	return longitude;
+}
+
+double GetMoonEclipticLongitudeEC(double dbJD)
+{
+	double Lp, D, M, Mp, F, E;
+	double dt = (dbJD - JD2000) / 36525.0; /*儒略世纪数*/
+
+	GetMoonEclipticParameter(dt, &Lp, &D, &M, &Mp, &F, &E);
+
+	/*计算月球地心黄经周期项*/
+	double EI = CalcMoonECLongitudePeriodic(D, M, Mp, F, E);
+
+	/*修正金星,木星以及地球扁率摄动*/
+	EI += CalcMoonLongitudePerturbation(dt, Lp, F);
+
+	/*计算月球地心黄经*/
+	double longitude = Lp + EI / 1000000.0;
+
+	/*计算天体章动干扰*/
+	longitude += CalcEarthLongitudeNutation(dt / 10.0);
+
+	longitude = Mod360Degree(longitude); /*映射到0-360范围内*/
+	return longitude;
+}
+
+// 计算指定年份的任意节气，angle是节气在黄道上的读数
+// 返回指定节气的儒略日时间(力学时)
+// 做了修改，按儒略日计算
+double CalculateSolarTermsJD(double JD1, int angle)
+{
+	double JD0, stDegree, stDegreep;
+
+	do
+	{
+		JD0 = JD1;
+		stDegree = GetSunEclipticLongitudeEC(JD0);
+		/*
+			对黄经0度迭代逼近时，由于角度360度圆周性，估算黄经值可能在(345,360]和[0,15)两个区间，
+			如果值落入前一个区间，需要进行修正
+		*/
+		stDegree = ((angle == 0) && (stDegree > 345.0)) ? stDegree - 360.0 : stDegree;
+		stDegreep = (GetSunEclipticLongitudeEC(JD0 + 0.000005)
+			- GetSunEclipticLongitudeEC(JD0 - 0.000005)) / 0.00001;
+		JD1 = JD0 - (stDegree - angle) / stDegreep;
+	} while ((fabs(JD1 - JD0) > 0.0000001));
+
+	return JD1;
+}
+
+/*
+得到给定的时间后面第一个日月合朔的时间，平均误差小于3秒
+输入参数是指定时间的力学时儒略日数
+返回值是日月合朔的力学时儒略日数
+*/
+double CalculateMoonShuoJD(double tdJD)
+{
+	double JD0, JD1, stDegree, stDegreep;
+
+	JD1 = tdJD;
+	do
+	{
+		JD0 = JD1;
+		double moonLongitude = GetMoonEclipticLongitudeEC(JD0);
+		double sunLongitude = GetSunEclipticLongitudeEC(JD0);
+		if ((moonLongitude > 330.0) && (sunLongitude < 30.0))
+		{
+			sunLongitude = 360.0 + sunLongitude;
+		}
+		if ((sunLongitude > 330.0) && (moonLongitude < 30.0))
+		{
+			moonLongitude = 60.0 + moonLongitude;
+		}
+
+		stDegree = moonLongitude - sunLongitude;
+		if (stDegree >= 360.0)
+			stDegree -= 360.0;
+
+		if (stDegree < -360.0)
+			stDegree += 360.0;
+
+		stDegreep = (GetMoonEclipticLongitudeEC(JD0 + 0.000005) - GetSunEclipticLongitudeEC(JD0 + 0.000005) - GetMoonEclipticLongitudeEC(JD0 - 0.000005) + GetSunEclipticLongitudeEC(JD0 - 0.000005)) / 0.00001;
+		JD1 = JD0 - stDegree / stDegreep;
+	} while ((fabs(JD1 - JD0) > 0.00000001));
+
+	return JD1;
+}
